@@ -22,8 +22,8 @@ st.title("Portfolio Optimization with Monte Carlo Simulation")
 st.sidebar.header("Portfolio Parameters")
 
 # Collect user inputs
-tickers = st.sidebar.text_input(
-    "Enter stock tickers separated by commas (e.g., AAPL, MSFT, AMZN)"
+permnos = st.sidebar.text_input(
+    "Enter stock PERMNOs separated by commas (e.g., 10107, 14593, 11850)"
 )
 num_simulations = st.sidebar.number_input(
     "Number of simulations", min_value=100, max_value=10000, step=100, value=1000
@@ -33,37 +33,37 @@ risk_free_rate = st.sidebar.number_input(
 ) / 100
 
 # Data Retrieval from WRDS
-def fetch_data_from_wrds(tickers, db):
-    tickers = tickers.split(",")
+def fetch_data_from_wrds(permnos, db):
+    permnos = permnos.split(",")
     stock_data = pd.DataFrame()
 
-    for ticker in tickers:
-        ticker = ticker.strip()
+    for permno in permnos:
+        permno = permno.strip()
         query = f"""
-        SELECT date, ticker, prc AS close
+        SELECT date, permno, prc AS close
         FROM crsp.dsf
-        WHERE ticker = '{ticker}'
-        AND date >= '2018-01-01'  -- Adjust date range as needed
+        WHERE permno = '{permno}'
+        AND date >= '2018-01-01'
         AND date <= CURRENT_DATE
         """
         try:
             df = db.raw_sql(query)
             if not df.empty:
                 df.set_index("date", inplace=True)
-                df.rename(columns={"close": ticker}, inplace=True)
-                stock_data = pd.concat([stock_data, df[ticker]], axis=1)
+                df.rename(columns={"close": permno}, inplace=True)
+                stock_data = pd.concat([stock_data, df[permno]], axis=1)
             else:
-                st.warning(f"No data found for ticker: {ticker}")
+                st.warning(f"No data found for PERMNO: {permno}")
         except Exception as e:
-            st.warning(f"Error fetching data for ticker {ticker}: {e}")
+            st.warning(f"Error fetching data for PERMNO {permno}: {e}")
 
     return stock_data
 
-# Check if user entered tickers
-if tickers:
-    data = fetch_data_from_wrds(tickers, db)
+# Check if user entered PERMNOs
+if permnos:
+    data = fetch_data_from_wrds(permnos, db)
     if data.empty:
-        st.error("No valid data found. Please check your tickers.")
+        st.error("No valid data found. Please check your PERMNOs.")
     else:
         st.write("### Historical Stock Data", data.tail())
 
